@@ -1,0 +1,23 @@
+Diamond.Builders.CommandBuilder("addons")
+  :action("reload", (client, command, action, arguments, options) =>
+    local addon = Diamond.Addon
+
+    local name = arguments[1]
+    if name then
+      addon = Diamond.Builders.AddonBuilder.get(name) ?? addon
+    end
+
+    addon:load(options.debug)
+  end, {
+    help = (client, command, action) =>
+      return Diamond.Builders.CommandBuilder.help(command, action, {
+        {
+          value = "addon",
+          optional = true
+        }
+      }, {
+        debug = "Displays additional information about the loading of files"
+      }, "Allows to reload the files of an addon")
+    end
+  })
+  :build()
