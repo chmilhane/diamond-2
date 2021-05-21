@@ -1,0 +1,33 @@
+public class Diamond.Utils.Collection
+  _get _set table
+
+  constructor(base = {}: table)
+    self:setTable(
+      table.Copy(base)
+    )
+  end
+
+  public map(action)
+    local result = {}
+    for i, v of self:getTable() do
+      result[#result + 1] = action(v, i)
+    end
+
+    self:setTable(result)
+
+    return self
+  end
+
+  public filter(canStore)
+    local result = {}
+    for i, v of self:getTable() do
+      if canStore(v, i) then
+        result[#result + 1] = v
+      end
+    end
+
+    self:setTable(result)
+
+    return self
+  end
+end

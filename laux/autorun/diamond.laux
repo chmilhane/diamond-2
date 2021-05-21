@@ -1,5 +1,6 @@
 Diamond = {
-  Builders = {}
+  Builders = {},
+  Utils = {}
 }
 
 function Diamond:AddServer(path: string)
@@ -25,6 +26,7 @@ Diamond:AddShared("diamond/libraries/promise.lua")
 Diamond:AddShared("diamond/builders/addon_builder.lua")
 
 local addon = Diamond.Builders.AddonBuilder("Diamond", Color(63, 140, 255), "diamond", true)
+  :pushFile("utils/collection")
 addon:load()
 
 Diamond.Addon = addon
