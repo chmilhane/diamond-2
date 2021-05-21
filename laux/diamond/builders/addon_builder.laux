@@ -1,0 +1,185 @@
+local addons = {}
+
+DIAMOND_SERVER = 1
+DIAMOND_CLIENT = 2
+DIAMOND_SHARED = 3
+
+public class Diamond.Builders.AddonBuilder
+  _get _set name
+  _get _set color
+  _get _set path
+  _get _set debug
+
+  private static Realms = {
+    [DIAMOND_SERVER] = {
+      action = (path) =>
+        return Diamond:AddServer(path)
+      end,
+      realm = {
+        text = "SERVER",
+        color = Color(137, 222, 255)
+      }
+    },
+    [DIAMOND_CLIENT] = {
+      action = (path) =>
+        return Diamond:AddClient(path)
+      end,
+      realm = {
+        text = "CLIENT",
+        color = Color(255, 222, 102)
+      }
+    },
+    [DIAMOND_SHARED] = {
+      action = (path) =>
+        return Diamond:AddShared(path)
+      end,
+      realm = {
+        text = "SHARED",
+        color = Color(156, 136, 255)
+      }
+    }
+  }
+
+  private static Colors = {
+    default = Color(225, 225, 225),
+    green = Color(76, 209, 55),
+    orange = Color(241, 196, 15),
+    red = Color(231, 76, 60)
+  }
+
+  public constructor(addonName: string, addonColor: table, addonPath: string, debug = false: boolean)
+    self.name = addonName
+    self.color = addonColor
+    self.path = addonPath
+    self.debug = debug
+
+    self.filesToLoad = {}
+    self.loadedFiles = {}
+
+    addons[addonName] = self
+  end
+
+  public log(...)
+    MsgC(
+      self:getColor(),
+      `[${self:getName()}] `,
+      Diamond.Builders.AddonBuilder.Colors?.default,
+      ...
+    )
+
+    MsgN()
+  end
+
+  public pushFile(path: string, realm = 3: number)
+    self.filesToLoad[#self.filesToLoad + 1] = {
+      path = path,
+      realm = realm
+    }
+
+    return self
+  end
+
+  public pushDirectory(path: string, realm = 3: number, options = {}: table)
+    local files, directories = file.Find(
+      self:join(self:getPath(), path) .. "/*",
+      "LUA"
+    )
+
+    for i, file in ipairs(files) do
+      local fullPath = self:join(path, file)
+      continueif options?.ignoredFiles?[fullPath]
+
+      self:pushFile(fullPath, options?.realms?[fullPath] ?? realm)
+    end
+
+    if options?.recursive then
+      for i, directory in ipairs(directories) do
+        continueif options?.ignoredDirectories?[directory]
+
+        self:pushDirectory(
+          self:join(
+            path,
+            directory
+          ),
+          realm,
+          options
+        )
+      end
+    end
+
+    return self
+  end
+
+  public join(...)
+    local path = ""
+
+    local args = { ... }
+    for i, v in ipairs(args) do
+      v = string.StripExtension(v)
+
+      v = string.Trim(v, "/")
+      v = string.Trim(v, "\\")
+
+      path ..= v:lower() .. (i ~= #args and "/" or "")
+    end
+
+    return path
+  end
+
+  public load(debug = false: boolean)
+    local promise = Diamond.Promises.new()
+
+    self.loadedFiles = {}
+
+    local { default, green, orange, red } = Diamond.Builders.AddonBuilder.Colors
+    self:log("Loading files...")
+
+    local loadTime = SysTime()
+    for i, v in ipairs(self.filesToLoad) do
+      local { realm, action } = Diamond.Builders.AddonBuilder.Realms?[v.realm]
+
+      local fullPath = self:join(self:getPath(), v.path) .. ".lua"
+      if self.loadedFiles[fullPath] then
+        if debug or self:getDebug() then
+          self:log(realm.color, `(${realm.text}) `, orange, "<Skipped> ", default, fullPath)
+        end
+
+        continue
+      end
+
+      if CLIENT then
+        AddCSLuaFile(fullPath)
+      end
+
+      if not file.Exists(fullPath, "LUA") then
+        if debug or self:getDebug() then
+          self:log(realm.color, `(${realm.text}) `, red, "<Not Found> ", default, fullPath)
+        end
+
+        continue
+      end
+
+      action(fullPath)
+      self.loadedFiles[fullPath] = true
+
+      if debug or self:getDebug() then
+        self:log(realm.color, `(${realm.text}) `, green, "<Loaded> ", default, fullPath)
+      end
+    end
+
+    local totalTime = (SysTime() - loadTime) * 1000
+    self:log("Loaded ", green, table.Count(self.loadedFiles), " files ", default, "in ", green, math.Round(totalTime, 2), " ms", default, "!")
+
+    promise:resolve(self)
+
+    return promise
+  end
+
+  public static get(addonName: string)
+    return addons?[addonName]
+  end
+
+  public static getTable()
+    return addons
+  end
+end

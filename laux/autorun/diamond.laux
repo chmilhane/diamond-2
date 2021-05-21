@@ -1,4 +1,6 @@
-Diamond = {}
+Diamond = {
+  Builders = {}
+}
 
 function Diamond:AddServer(path: string)
   if SERVER then
@@ -18,3 +20,11 @@ function Diamond:AddShared(path: string)
   self:AddClient(path)
   return self:AddServer(path)
 end
+
+Diamond:AddShared("diamond/libraries/promise.lua")
+Diamond:AddShared("diamond/builders/addon_builder.lua")
+
+local addon = Diamond.Builders.AddonBuilder("Diamond", Color(63, 140, 255), "diamond", true)
+addon:load()
+
+Diamond.Addon = addon
