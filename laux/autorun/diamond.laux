@@ -1,0 +1,20 @@
+Diamond = {}
+
+function Diamond:AddServer(path: string)
+  if SERVER then
+    return include(path)
+  end
+end
+
+function Diamond:AddClient(path: string)
+  if CLIENT then
+    return include(path)
+  end
+
+  AddCSLuaFile(path)
+end
+
+function Diamond:AddShared(path: string)
+  self:AddClient(path)
+  return self:AddServer(path)
+end
