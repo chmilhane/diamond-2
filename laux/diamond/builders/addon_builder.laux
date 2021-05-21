@@ -127,8 +127,6 @@ public class Diamond.Builders.AddonBuilder
   end
 
   public load(debug = false: boolean)
-    local promise = Diamond.Promises.new()
-
     self.loadedFiles = {}
 
     local { default, green, orange, red } = Diamond.Builders.AddonBuilder.Colors
@@ -170,9 +168,7 @@ public class Diamond.Builders.AddonBuilder
     local totalTime = (SysTime() - loadTime) * 1000
     self:log("Loaded ", green, table.Count(self.loadedFiles), " files ", default, "in ", green, math.Round(totalTime, 2), " ms", default, "!")
 
-    promise:resolve(self)
-
-    return promise
+    return self
   end
 
   public static get(addonName: string)

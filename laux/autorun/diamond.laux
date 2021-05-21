@@ -22,11 +22,15 @@ function Diamond:AddShared(path: string)
   return self:AddServer(path)
 end
 
-Diamond:AddShared("diamond/libraries/promise.lua")
 Diamond:AddShared("diamond/builders/addon_builder.lua")
 
-local addon = Diamond.Builders.AddonBuilder("Diamond", Color(63, 140, 255), "diamond", true)
+Diamond.Addon = Diamond.Builders.AddonBuilder("Diamond", Color(63, 140, 255), "diamond")
+  :pushFile("libraries/promise")
   :pushFile("utils/collection")
-addon:load()
-
-Diamond.Addon = addon
+  :pushDirectory("builders", {
+    ignoredFiles = {
+      ["builders/addon_builder"] = true
+    }
+  })
+  :pushDirectory("commands")
+  :load()

@@ -1,0 +1,152 @@
+local commands = {}
+
+public class Diamond.Builders.CommandBuilder
+  _get _set command
+  _get _set customCheck
+
+  public constructor(command, customCheck)
+    self:setCommand(command)
+    self:setCustomCheck(customCheck)
+
+    self.actions = {}
+  end
+
+  public static getArguments(arguments = {}: table)
+    local result = {}
+    for i, v of arguments do
+      continueif i == 1 or i == 2
+      continueif string.StartWith(v, "--")
+
+      result[#result + 1] = v
+    end
+
+    return result
+  end
+
+  public static getOptions(arguments = {}: table)
+    local result = {}
+    for i, v of arguments do
+      if not (i ~= 1 or i ~= 2) or string.StartWith(v, "--") then
+        result[string.TrimLeft(v, "--")] = true
+      end
+    end
+
+    return result
+  end
+
+  public static filterArguments(arguments = {}: table)
+    return {
+      arguments = Diamond.Builders.CommandBuilder.getArguments(arguments),
+      options = Diamond.Builders.CommandBuilder.getOptions(arguments)
+    }
+  end
+
+  public static getCommands()
+    return Diamond.Utils.Collection(commands):map((command) =>
+      return command:getCommand()
+    end):getTable()
+  end
+
+  public static getActions(command: string)
+    return Diamond.Utils.Collection(commands?[command]?.actions):map((i, action) =>
+      return action
+    end):getTable()
+  end
+
+  public getAction(action: string)
+    return self.actions[action]
+  end
+
+  public action(action: string, callback, options = {}: table)
+    if not isfunction(callback) then return end
+    self.actions[action] = {
+      callback = callback,
+      options = options
+    }
+
+    return self
+  end
+
+  public static help(command: string, action: string, arguments, options, about)
+    print("Usage:")
+
+    local fullCommand = "diamond"
+    fullCommand ..= " " .. command
+    fullCommand ..= " " .. action
+
+    if istable(arguments) then
+      for i, arg in ipairs(arguments) do
+        fullCommand ..= " " .. (arg.optional and "[" or "<") .. arg.value .. (arg.optional and "]" or ">")
+      end
+    end
+
+    if istable(options) then
+      fullCommand ..= " [options]"
+    end
+
+    print("\t" .. fullCommand)
+
+    if istable(options) then
+      MsgN()
+  
+      print("Options:")
+      for option, description of options do
+        print("\t" .. `--${option}`, description)
+      end
+    end
+  
+    if isstring(about) then
+      MsgN()
+  
+      print("About:")
+      print("\t" .. about)
+    end
+  end
+
+  public build()
+    commands[self:getCommand()] = self
+  end
+end
+
+concommand.Add("diamond", (client, base, arguments) =>
+  local command = arguments[1]
+  assert(command, "Available commands are: " .. table.concat(Diamond.Builders.CommandBuilder.getCommands(), ", "))
+
+  local action = arguments[2]
+  assert(action, "Available actions are: " .. table.concat(Diamond.Builders.CommandBuilder.getActions(command), ", "))
+
+  local { arguments, options } = Diamond.Builders.CommandBuilder.filterArguments(arguments)
+  for i, v of commands do
+    if i ~= command then continue end
+
+    local customCheck = v:getCustomCheck()
+    if isfunction(customCheck) then
+      assert(customCheck(client, command, action, options), "You cannot access this command!")
+    end
+
+    local actionObject = v:getAction(action)
+    assert(isfunction(actionObject.callback), "Available actions are: " .. table.concat(Diamond.Builders.CommandBuilder.getActions(command), ", "))
+
+    local shouldCallCommand = true
+    for option of options do
+      for commandOption, optionCallback of actionObject.options do
+        if option == commandOption then
+          if isfunction(optionCallback) then
+            optionCallback(client, command, action, arguments, options, option)
+          end
+
+          shouldCallCommand = false
+        end
+      end
+    end
+
+    if shouldCallCommand then
+      actionObject.callback(client, command, action, arguments, options)
+    end
+  end
+end, (base, arguments) =>
+  local commands = Diamond.Builders.CommandBuilder.getCommands()
+  return Diamond.Utils.Collection(commands):map((command) =>
+    return `${base} ${command}`
+  end):getTable()
+end)
