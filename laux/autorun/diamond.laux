@@ -27,7 +27,7 @@ Diamond:AddShared("diamond/builders/addon_builder.lua")
 Diamond.Addon = Diamond.Builders.AddonBuilder("Diamond", Color(63, 140, 255), "diamond")
   :pushFile("libraries/promise")
   :pushFile("utils/collection")
-  :pushDirectory("builders", {
+  :pushDirectory("builders", DIAMOND_SHARED, {
     ignoredFiles = {
       ["builders/addon_builder"] = true
     }
