@@ -125,7 +125,7 @@ concommand.Add("diamond", (client, base, arguments) =>
     end
 
     local actionObject = v:getAction(action)
-    assert(isfunction(actionObject.callback), "Available actions are: " .. table.concat(Diamond.Builders.CommandBuilder.getActions(command), ", "))
+    assert(isfunction(actionObject?.callback), "Available actions are: " .. table.concat(Diamond.Builders.CommandBuilder.getActions(command), ", "))
 
     local shouldCallCommand = true
     for option of options do
