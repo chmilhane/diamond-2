@@ -1,5 +1,5 @@
 Diamond.Builders.CommandBuilder("addons", () ->
-    return Diamond.PermissionManager.isAdmin(self)
+    return Diamond.Managers.PermissionManager.isAdmin(self)
   end)
   :action("reload", (command, action, arguments, options) ->
     local addon = Diamond.Addon
