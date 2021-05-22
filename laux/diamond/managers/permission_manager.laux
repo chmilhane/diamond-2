@@ -1,0 +1,5 @@
+public class Diamond.Managers.PermissionManager
+  public static isAdmin(client: Player)
+    return client:IsAdmin() or client:IsSuperAdmin()
+  end
+end

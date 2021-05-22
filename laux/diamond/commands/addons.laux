@@ -1,5 +1,7 @@
-Diamond.Builders.CommandBuilder("addons")
-  :action("reload", (client, command, action, arguments, options) =>
+Diamond.Builders.CommandBuilder("addons", () ->
+    return Diamond.PermissionManager.isAdmin(self)
+  end)
+  :action("reload", (command, action, arguments, options) ->
     local addon = Diamond.Addon
 
     local name = arguments[1]
@@ -9,7 +11,7 @@ Diamond.Builders.CommandBuilder("addons")
 
     addon:load(options.debug)
   end, {
-    help = (client, command, action) =>
+    help = (command, action) ->
       return Diamond.Builders.CommandBuilder.help(command, action, {
         {
           value = "addon",
